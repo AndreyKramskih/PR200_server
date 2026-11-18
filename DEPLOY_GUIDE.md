@@ -1,14 +1,14 @@
-# Инструкция по развертыванию мульти-шкафного сервера ПР200 на новом VPS
+# Инструкция по развертыванию мульти-шкафного сервера ПР200 на VPS
 
 ## 0. Что сохранить на компьютере перед переносом или удалением старого VPS
-Убедитесь, что у вас на компьютере (в папке `C:\Users\PR200_server`) сохранены актуальные файлы:
+Убедитесь, что у вас на компьютере (в папке проекта, например `C:\Users\PR200_server`) сохранены актуальные файлы:
 * `main.py` — код мульти-шкафного сервера (`PR200 Multi-Cabinet Server`).
 * `convert_map.py` — конвертер выгрузок из Owen Logic в JSON-карты шкафов.
-* Папка или файлы карт шкафов (`shkaf_01.json`, `shkaf_02.json` и т.д.).
-* *(Опционально)* Скачать накопленную историю и все карты со старого сервера на ПК:
+* Карты шкафов (`shkaf_01.json`, `shkaf_02.json` и т.д.).
+* *(Опционально)* Скачать накопленную историю и все карты со старого сервера на ПК перед удалением бокса:
   ```bash
-  scp root@152.228.98.9:/opt/pr200_server/telemetry.db .
-  scp -r root@152.228.98.9:/opt/pr200_server/maps .
+  scp root@<СТАРЫЙ_IP>:/opt/pr200_server/telemetry.db .
+  scp -r root@<СТАРЫЙ_IP>:/opt/pr200_server/maps .
   ```
 
 ---
@@ -19,7 +19,7 @@
 
 ---
 
-## 2. Установка среды и настройка защиты на новом VPS (1 блок команд)
+## 2. Установка среды, переменной окружения и защиты (1 блок команд)
 1. Подключитесь к серверу из командной строки Windows (`cmd`):
    ```bash
    ssh root@<НОВЫЙ_IP>
@@ -28,7 +28,7 @@
    ```bash
    passwd
    ```
-3. Выполните единый блок установки (ставит Python, библиотеки, Caddy для HTTPS, файрвол `ufw`, защиту от подбора паролей `fail2ban`, создает папки и службу автозапуска):
+3. Придумайте надежный мастер-ключ администратора (замените им `<ВАШ_НОВЫЙ_МАСТЕР_КЛЮЧ>` в команде ниже) и выполните этот единый блок в окне SSH:
    ```bash
    apt update && apt install -y python3-venv python3-pip caddy ufw fail2ban
    systemctl enable --now fail2ban
@@ -50,6 +50,7 @@
 
    [Service]
    WorkingDirectory=/opt/pr200_server
+   Environment="PR200_MASTER_KEY=<ВАШ_НОВЫЙ_МАСТЕР_КЛЮЧ>"
    ExecStart=/opt/pr200_server/venv/bin/python main.py
    Restart=always
    RestartSec=3
@@ -58,6 +59,7 @@
    WantedBy=multi-user.target
    EOF
 
+   chmod 600 /etc/systemd/system/pr200.service
    systemctl daemon-reload
    systemctl enable pr200
    ```
@@ -85,7 +87,7 @@
 ---
 
 ## 4. Включение бесплатного HTTPS (SSL-сертификата)
-Замените точки в `<НОВЫЙ_IP>` на дефисы (например, `152.228.98.9` -> `152-228-98-9.sslip.io`) и выполните в окне SSH:
+Замените точки в `<НОВЫЙ_IP>` на дефисы (например, `185.10.20.30` -> `185-10-20-30.sslip.io`) и выполните в окне SSH:
 
 ```bash
 cat << 'EOF' > /etc/caddy/Caddyfile
@@ -96,7 +98,7 @@ EOF
 
 systemctl restart caddy
 ```
-Через 15 секунд проверьте работу API по HTTPS: `https://<НОВЫЙ_IP_ЧЕРЕЗ_ДЕФИС>.sslip.io/docs`.
+Через 15–20 секунд проверьте работу API по HTTPS в браузере: `https://<НОВЫЙ_IP_ЧЕРЕЗ_ДЕФИС>.sslip.io/docs`.
 
 ---
 
@@ -108,6 +110,8 @@ systemctl restart caddy
    * **Register Code:** `ID:shkaf_01` (для следующих шкафов: `ID:shkaf_02`, `ID:shkaf_03`...)
    * Нажмите **`Submit`** и перезагрузите модуль (**`OTHERS -> Restart`**).
 2. **Добавление нового шкафа в будущем:**
-   * Сгенерируйте карту через `convert_map.py` -> загрузите файл `shkaf_02.json` в `/opt/pr200_server/maps/` (через `scp` или `POST /api/cabinets/shkaf_02/map`) -> выставите `chmod 600 /opt/pr200_server/maps/*.json`. Перезапуск сервера не требуется.
+   * Сгенерируйте карту через `convert_map.py` (указав имя шкафа и `Slave ID`).
+   * Загрузите файл `shkaf_02.json` в `/opt/pr200_server/maps/` (через `scp` или `POST /api/cabinets/shkaf_02/map`).
+   * Выставьте права `chmod 600 /opt/pr200_server/maps/*.json`. Перезапуск сервера не требуется.
 3. **В мобильном приложении на Flutter:**
    * Укажите `baseUrl = 'https://<НОВЫЙ_IP_ЧЕРЕЗ_ДЕФИС>.sslip.io'` и клиентский `apiKey` из нужного файла `shkaf_XX.json`.
