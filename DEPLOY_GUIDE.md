@@ -115,3 +115,16 @@ systemctl restart caddy
    * Выставьте права `chmod 600 /opt/pr200_server/maps/*.json`. Перезапуск сервера не требуется.
 3. **В мобильном приложении на Flutter:**
    * Укажите `baseUrl = 'https://<НОВЫЙ_IP_ЧЕРЕЗ_ДЕФИС>.sslip.io'` и клиентский `apiKey` из нужного файла `shkaf_XX.json`.
+
+---
+
+## 6. Обслуживание и смена мастер-ключа на работающем сервере
+Если потребуется заменить мастер-ключ администратора без правки `main.py` и без остановки клиентских шкафов, подключитесь по SSH и выполните (подставив новый ключ вместо `<НОВЫЙ_МАСТЕР_КЛЮЧ>`):
+
+```bash
+sed -i 's/Environment="PR200_MASTER_KEY=.*"/Environment="PR200_MASTER_KEY=<НОВЫЙ_МАСТЕР_КЛЮЧ>"/' /etc/systemd/system/pr200.service
+systemctl daemon-reload
+systemctl restart pr200
+systemctl status pr200
+```
+*(Клиентские ключи в файлах `shkaf_*.json` при этом не меняются и продолжают работать в штатном режиме).*

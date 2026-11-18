@@ -1,7 +1,7 @@
 # Документация API сервера телеметрии ПР200 (Systherm Multi-Cabinet API)
 
 ## 1. Базовые параметры подключения
-* **Base URL:** `https://sslip.io`
+* **Base URL:** `https://<SERVER_IP_DASHES>.sslip.io` *(например, `https://sslip.io`)*
 * **Прямой TCP-порт для шкафов (HF2211):** `<SERVER_IP>:9000`
 * **Формат данных:** `application/json; charset=utf-8`
 * **Авторизация и разграничение прав:**
@@ -10,7 +10,7 @@
   X-API-Key: <API_KEY>
   ```
   * **Ключ клиента** (значение `"api_key"` из файла `/opt/pr200_server/maps/<cab_id>.json`): открывает доступ **только к одному конкретному шкафу**.
-  * **Мастер-ключ** (`<MASTER_API_KEY>`): открывает доступ **ко всем шкафам сразу**, а также позволяет загружать новые карты регистров через API.
+  * **Мастер-ключ** (значение переменной `PR200_MASTER_KEY` на сервере): открывает доступ **ко всем шкафам сразу**, а также позволяет загружать новые карты регистров через API.
 * **Коды ответов:**
   * `200 OK` — запрос выполнен успешно.
   * `403 Forbidden` — неверный ключ или попытка доступа к чужому шкафу.
@@ -91,7 +91,7 @@
 * **Пример ответа (`200 OK`):**
   ```json
   {
-    "api_key": "u28Z4kZj9ejpa_0CIgmYouyN3u-z2KF-",
+    "api_key": "<CLIENT_API_KEY>",
     "slave_id": 16,
     "start_reg": 512,
     "total_regs": 50,
@@ -126,7 +126,7 @@ class Pr200ApiService {
   final String apiKey; // Ключ конкретного шкафа или мастер-ключ
 
   Pr200ApiService({
-    this.baseUrl = 'https://sslip.io',
+    required this.baseUrl, // Например: 'https://sslip.io'
     required this.apiKey,
   });
 
