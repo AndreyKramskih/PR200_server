@@ -182,6 +182,7 @@ async def lifespan(app: FastAPI):
     os.makedirs(MAPS_DIR, exist_ok=True)
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("PRAGMA auto_vacuum = INCREMENTAL")
+        await db.execute("PRAGMA journal_mode = WAL")  # <-- ДОБАВИТЬ ЭТУ СТРОКУ
         await db.execute("CREATE TABLE IF NOT EXISTS log (cab TEXT, ts REAL, tag TEXT, val REAL)")
         await db.execute("CREATE INDEX IF NOT EXISTS idx_log_query ON log (cab, tag, ts)")
         await db.commit()
