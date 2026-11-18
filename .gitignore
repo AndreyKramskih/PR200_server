@@ -1,0 +1,13 @@
+# Секретные карты шкафов с API-ключами и база данных
+*.json
+maps/
+*.db
+*.sqlite
+
+# Системные папки Python и PyCharm
+venv/
+.venv/
+__pycache__/
+.idea/
+*.csv
+!map.example.json
